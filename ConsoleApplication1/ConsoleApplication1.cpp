@@ -56,15 +56,9 @@ HBITMAP backBuffer;
 HDC dc;
 HDC dcBack;
 
-Triple t1 = Triple(100, 100, 1);
-Triple t2 = Triple(200, 100, 1);
-Triple t3 = Triple(100, 200, 1);
-Triple t4 = Triple(200, 200, 1);
+Triple cubeTopLeft = Triple(100, 100, 1);
 
-Triple t5 = Triple(100, 100, 100);
-Triple t6 = Triple(200, 100, 101);
-Triple t7 = Triple(100, 200, 101);
-Triple t8 = Triple(200, 200, 101);
+Triple cubeSize = Triple(100, 100, 100);
 
 Triple cameraPan = Triple(45, 45, 45);
 Triple cameraPosition = Triple(-840, -360, 0);
@@ -105,7 +99,7 @@ int main()
 
 		cameraPosition = Triple(-840, -360, 0);
 
-		DrawCube(t1, t5);
+		DrawCube(cubeTopLeft, cubeSize);
 
 
 		BitBlt(dc, 0, 0, r.right, r.bottom, dcBack, 0, 0, SRCCOPY);
