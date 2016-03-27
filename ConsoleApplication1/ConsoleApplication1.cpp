@@ -44,13 +44,13 @@ struct Triple
 	}
 };
 
-Point Convert3D2D(Triple coords, Triple pan, Point center, Triple position);
 Point Convert3D2D(Triple position, Triple cameraPosition, Triple cameraPan);
 void DrawLine(Point point1, Point point2);
 int sign(double x);
 void DrawTri(Triple top, Triple left, Triple right);
 void DrawQuad(Triple topLeft, Triple topRight, Triple bottomLeft, Triple bottomRight);
 void DrawCube(Triple topLeft, Triple size);
+
 
 HBITMAP backBuffer;
 HDC dc;
@@ -60,7 +60,7 @@ Triple cubeTopLeft = Triple(100, 100, 1);
 
 Triple cubeSize = Triple(100, 100, 100);
 
-Triple cameraPan = Triple(45, 45, 45);
+Triple cameraPan = Triple(360, 360, 360);
 Triple cameraPosition = Triple(-840, -360, 0);
 
 int zoom = 1;
@@ -115,36 +115,6 @@ int main()
 	return 0;
 }
 
-Point Convert3D2D(Triple coords, Triple pan, Point center, Triple position)
-{
-	Point newPoint;
-	Triple newPos;
-
-	coords.x = coords.x + position.x;
-	coords.y = coords.y + position.y;
-	coords.z = coords.z + position.z;
-
-	newPos.x = coords.x * cos(pan.x) - coords.z * sin(pan.x);
-	newPos.z = coords.x * sin(pan.x) + coords.z * cos(pan.x);
-	newPos.y = coords.y * cos(pan.y) - coords.z * sin(pan.y);
-	coords.z = newPos.y * cos(pan.y) - newPos.z * sin(pan.y);
-	coords.x = newPos.x * cos(pan.z) - newPos.y * sin(pan.z);
-	coords.y = newPos.x * sin(pan.z) + newPos.y * cos(pan.z);
-
-	if (coords.z > 0)
-	{
-		newPoint.x = coords.x / coords.z * zoom + center.x;
-		newPoint.y = coords.y / coords.z * zoom + center.y;
-	}
-	else
-	{
-		newPoint.x = coords.x * zoom + center.x;
-		newPoint.y = coords.y * zoom + center.y;
-	}
-
-	return newPoint;
-}
-
 Point Convert3D2D(Triple position, Triple cameraPosition, Triple cameraPan)
 {
 	Triple newPos;
@@ -173,20 +143,28 @@ void DrawLine(Point point1, Point point2)
 	double deltaX = point2.x - point1.x;
 	double deltaY = point2.y - point1.y;
 	double error = 0;
-	double deltaErr = 0;
-	if (deltaX != 0)
-		deltaErr = abs(deltaY / deltaX);
+	double deltaErr = abs(deltaY / deltaX);
 	int y = point1.y;
 
-	for (int x = point1.x; x < point2.x; x++)
+	if (point1.x == point2.x)
 	{
-		SetPixel(dcBack, x, y, RGB(255, 0, 0));
-		error += deltaErr;
-		while (error >= 0.5)
+		for (int y = point1.y; y < point2.y; y++)
+		{
+			SetPixel(dcBack, point1.x, y, RGB(255, 0, 0));
+		}
+	}
+	else
+	{
+		for (int x = point1.x; x < point2.x; x++)
 		{
 			SetPixel(dcBack, x, y, RGB(255, 0, 0));
-			y += sign(point2.y - point1.y);
-			error -= 1.0;
+			error += deltaErr;
+			while (error >= 0.5)
+			{
+				SetPixel(dcBack, x, y, RGB(255, 0, 0));
+				y += sign(point2.y - point1.y);
+				error -= 1.0;
+			}
 		}
 	}
 }
