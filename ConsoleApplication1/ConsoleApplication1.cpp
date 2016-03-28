@@ -13,7 +13,6 @@ using namespace std;
 #define KEY_DOWN 80
 #define KEY_LEFT 75
 #define KEY_RIGHT 77
-#define _USE_MATH_DEFINES
 
 struct Point
 {
@@ -60,8 +59,9 @@ Triple cubeTopLeft = Triple(100, 100, 1);
 
 Triple cubeSize = Triple(100, 100, 100);
 
-Triple cameraPan = Triple(360, 360, 360);
-Triple cameraPosition = Triple(-840, -360, 0);
+Triple cameraPan = Triple(0, 0, 0);
+Triple camPos = Triple(-640, -360, 0);
+Triple cameraPosition = Triple(-640, -360, 0);
 
 int zoom = 1;
 
@@ -89,15 +89,16 @@ int main()
 
 		i = _getch();
 
-		switch (i)
-		{
-		case KEY_UP:
-			cameraPan.y-=0.1;
-		case KEY_DOWN:
-			cameraPan.x-=0.1;
-		}
+		if (i == 72)
+			cameraPan.y -= 5;
+		else if (i == 80)
+			cameraPan.x -= 5;
+		else if (i == 75)
+			camPos.x += 5;
+		else if (i == 77)
+			camPos.x -= 5;
 
-		cameraPosition = Triple(-840, -360, 0);
+		cameraPosition = camPos;
 
 		DrawCube(cubeTopLeft, cubeSize);
 
@@ -119,6 +120,10 @@ Point Convert3D2D(Triple position, Triple cameraPosition, Triple cameraPan)
 {
 	Triple newPos;
 	Point p;
+
+	cameraPan.x *= 0.0174533;
+	cameraPan.y *= 0.0174533;
+	cameraPan.z *= 0.0174533;
 
 	newPos.x = cos(cameraPan.y) * (sin(cameraPan.z) * position.y + cos(cameraPan.z) * position.x) - sin(cameraPan.y) * position.z;
 	newPos.y = sin(cameraPan.x) * (cos(cameraPan.y) * position.z + sin(cameraPan.y) * (sin(cameraPan.z) * position.y + cos(cameraPan.z) * position.x)) + cos(cameraPan.x) * (cos(cameraPan.z) * position.y - sin(cameraPan.z) * position.x);
@@ -187,18 +192,39 @@ void DrawTri(Triple top, Triple left, Triple right)
 
 	if (p1.x < p2.x)
 		DrawLine(p1, p2);
-	else
+	else if (p2.x < p1.x)
 		DrawLine(p2, p1);
+	else
+	{
+		if (p1.y < p2.y)
+			DrawLine(p1, p2);
+		else
+			DrawLine(p2, p1);
+	}
 
 	if (p1.x < p3.x)
 		DrawLine(p1, p3);
-	else
+	else if (p3.x < p1.x)
 		DrawLine(p3, p1);
+	else
+	{
+		if (p1.y < p3.y)
+			DrawLine(p1, p3);
+		else
+			DrawLine(p3, p1);
+	}
 
-	if (p2.x < p3.x)
+	if (p3.x < p2.x)
+		DrawLine(p3, p2);
+	else if (p2.x < p3.x)
 		DrawLine(p2, p3);
 	else
-		DrawLine(p3, p2);
+	{
+		if (p3.y < p2.y)
+			DrawLine(p3, p2);
+		else
+			DrawLine(p2, p3);
+	}
 }
 
 void DrawQuad(Triple topLeft, Triple topRight, Triple bottomLeft, Triple bottomRight)
