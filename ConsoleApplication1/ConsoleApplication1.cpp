@@ -1,5 +1,7 @@
-// ConsoleApplication1.cpp : Defines the entry Vector2 for the console application.
-//
+/// 3D Graphics Engine using:
+/// Perspective 3D Projection: https://en.wikipedia.org/wiki/3D_projection#Perspective_projection
+/// Bresenham's Line Algorithm: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+/// Author: James 'GammaS' Carter
 
 #include "stdafx.h"
 #include <iostream>
@@ -9,7 +11,7 @@
 
 using namespace std;
 
-// TODO -- Fixe issues where program would crash, when varibles were set to doubles not ints
+// TODO -- Fix issue where program will crash, when varibles were set to doubles not ints
 struct Vector2
 {
 	int x, y;
@@ -66,45 +68,24 @@ struct Vertex
 	{
 
 	}
-
-	//void Draw(COLORREF colour)
-	//{
-	//	pointA = Convert3D2D(positionA, cameraPosition, cameraPan);
-	//	pointB = Convert3D2D(positionB, cameraPosition, cameraPan);
-
-	//	if (pointA.x < pointB.x)
-	//		DrawLine(pointA, pointB, colour);
-	//	else if (pointB.x < pointA.x)
-	//		DrawLine(pointB, pointA, colour);
-	//	else
-	//	{
-	//		if (pointA.y < pointB.y)
-	//			DrawLine(pointA, pointB, colour);
-	//		else
-	//			DrawLine(pointB, pointA, colour);
-	//	}
-	//}
 };
 
 Vector2 Convert3D2D(Vector3 position, Vector3 cameraPosition, Vector3 cameraPan);
+void DrawVertex(Vertex vertex, COLORREF colour);
 void DrawLine(Vector2 point1, Vector2 point2, COLORREF colour);
 int sign(double x);
 void DrawCube(Vector3 topLeft, Vector3 size);
-
 
 HBITMAP backBuffer;
 HDC dc;
 HDC dcBack;
 
 Vector3 cubeTopLeft = Vector3(100, 100, 1);
-
 Vector3 cubeSize = Vector3(100, 100, 100);
 
 Vector3 cameraPan = Vector3(0, 0, 0);
 Vector3 camPos = Vector3(-640, -360, 0);
 Vector3 cameraPosition = Vector3(-640, -360, 0);
-
-int zoom = 1;
 
 int main()
 {
@@ -115,7 +96,6 @@ int main()
 	MoveWindow(console, 0, 0, 1280, 720, TRUE);
 
 	int i = 0;
-
 
 	while (1 == 1)
 	{
@@ -140,16 +120,13 @@ int main()
 			camPos.x -= 5;
 
 		cameraPosition = camPos;
-		cameraPosition.Zero();
 
 		DrawCube(cubeTopLeft, cubeSize);
-
 
 		BitBlt(dc, 0, 0, r.right, r.bottom, dcBack, 0, 0, SRCCOPY);
 
 		DeleteObject(dcBack);
 		DeleteObject(backBuffer);
-
 	}
 
 	ReleaseDC(console, dc);
@@ -183,6 +160,24 @@ Vector2 Convert3D2D(Vector3 position, Vector3 cameraPosition, Vector3 cameraPan)
 	}
 
 	return p;
+}
+
+void DrawVertex(Vertex vertex, COLORREF colour)
+{
+	Vector2 pointA = Convert3D2D(vertex.positionA, cameraPosition, cameraPan);
+	Vector2 pointB = Convert3D2D(vertex.positionB, cameraPosition, cameraPan);
+
+	if (pointA.x < pointB.x)
+		DrawLine(pointA, pointB, colour);
+	else if (pointB.x < pointA.x)
+		DrawLine(pointB, pointA, colour);
+	else
+	{
+		if (pointA.y < pointB.y)
+			DrawLine(pointA, pointB, colour);
+		else
+			DrawLine(pointB, pointA, colour);
+	}
 }
 
 void DrawLine(Vector2 point1, Vector2 point2, COLORREF colour)
@@ -240,9 +235,22 @@ void DrawCube(Vector3 topLeft, Vector3 size)
 	Vector3 bottomRight2 = Vector3(topLeft.x + size.x, topLeft.y + size.y, topLeft.z + size.z);
 
 	vertex[0] = Vertex(topLeft, topRight);
+	vertex[1] = Vertex(topLeft, bottomLeft);
+	vertex[2] = Vertex(topRight, bottomRight);
+	vertex[3] = Vertex(bottomLeft, bottomRight);
+
+	vertex[4] = Vertex(topLeft2, topRight2);
+	vertex[5] = Vertex(topLeft2, bottomLeft2);
+	vertex[6] = Vertex(topRight2, bottomRight2);
+	vertex[7] = Vertex(bottomLeft2, bottomRight2);
+
+	vertex[8] = Vertex(topLeft, topLeft2);
+	vertex[9] = Vertex(topRight, topRight2);
+	vertex[10] = Vertex(bottomLeft, bottomLeft2);
+	vertex[11] = Vertex(bottomRight, bottomRight2);
 
 	for (int i = 0; i < 12; i++)
 	{
-		//vertex[i].Draw(RGB(0, 255, 0));
+		DrawVertex(vertex[i], RGB((i * 20), 150, 0));
 	}
 }
