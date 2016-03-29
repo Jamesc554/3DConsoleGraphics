@@ -1,4 +1,4 @@
-// ConsoleApplication1.cpp : Defines the entry point for the console application.
+// ConsoleApplication1.cpp : Defines the entry Vector2 for the console application.
 //
 
 #include "stdafx.h"
@@ -9,59 +9,100 @@
 
 using namespace std;
 
-#define KEY_UP 72
-#define KEY_DOWN 80
-#define KEY_LEFT 75
-#define KEY_RIGHT 77
-
-struct Point
+// TODO -- Fixe issues where program would crash, when varibles were set to doubles not ints
+struct Vector2
 {
 	int x, y;
-	Point() : x(0), y(0)
+	Vector2() : x(0), y(0)
 	{
 
 	}
 
-	Point(int xPos, int yPos) : x(xPos), y(yPos)
+	Vector2(int xPos, int yPos) : x(xPos), y(yPos)
 	{
 
+	}
+
+	void Zero()
+	{
+		x = 0;
+		y = 0;
 	}
 };
 
-struct Triple
+struct Vector3
 {
 	double x, y;
 	double z;
-	Triple() : x(0), y(0), z(0)
+	Vector3() : x(0), y(0), z(0)
 	{
 
 	}
 
-	Triple(double xPos, double yPos, double zPos) : x(xPos), y(yPos), z(zPos)
+	Vector3(double xPos, double yPos, double zPos) : x(xPos), y(yPos), z(zPos)
 	{
 
+	}
+
+	void Zero()
+	{
+		x = 0;
+		y = 0;
+		z = 0;
 	}
 };
 
-Point Convert3D2D(Triple position, Triple cameraPosition, Triple cameraPan);
-void DrawLine(Point point1, Point point2);
+struct Vertex
+{
+	Vector3 positionA, positionB;
+	Vector2 pointA, pointB;
+	Vertex()
+	{
+		positionA = Vector3();
+		positionB = Vector3();
+	}
+
+	Vertex(Vector3 point1, Vector3 point2) : positionA(point1), positionB(point2)
+	{
+
+	}
+
+	//void Draw(COLORREF colour)
+	//{
+	//	pointA = Convert3D2D(positionA, cameraPosition, cameraPan);
+	//	pointB = Convert3D2D(positionB, cameraPosition, cameraPan);
+
+	//	if (pointA.x < pointB.x)
+	//		DrawLine(pointA, pointB, colour);
+	//	else if (pointB.x < pointA.x)
+	//		DrawLine(pointB, pointA, colour);
+	//	else
+	//	{
+	//		if (pointA.y < pointB.y)
+	//			DrawLine(pointA, pointB, colour);
+	//		else
+	//			DrawLine(pointB, pointA, colour);
+	//	}
+	//}
+};
+
+Vector2 Convert3D2D(Vector3 position, Vector3 cameraPosition, Vector3 cameraPan);
+void DrawLine(Vector2 point1, Vector2 point2, COLORREF colour);
 int sign(double x);
-void DrawTri(Triple top, Triple left, Triple right);
-void DrawQuad(Triple topLeft, Triple topRight, Triple bottomLeft, Triple bottomRight);
-void DrawCube(Triple topLeft, Triple size);
+void DrawCube(Vector3 topLeft, Vector3 size);
 
 
 HBITMAP backBuffer;
 HDC dc;
 HDC dcBack;
 
-Triple cubeTopLeft = Triple(100, 100, 1);
+Vector3 cubeTopLeft = Vector3(100, 100, 1);
 
-Triple cubeSize = Triple(100, 100, 100);
+Vector3 cubeSize = Vector3(100, 100, 100);
 
-Triple cameraPan = Triple(0, 0, 0);
-Triple camPos = Triple(-640, -360, 0);
-Triple cameraPosition = Triple(-640, -360, 0);
+Vector3 cameraPan = Vector3(0, 0, 0);
+Vector3 camPos = Vector3(-640, -360, 0);
+Vector3 cameraPosition = Vector3(-640, -360, 0);
 
 int zoom = 1;
 
@@ -99,6 +140,7 @@ int main()
 			camPos.x -= 5;
 
 		cameraPosition = camPos;
+		cameraPosition.Zero();
 
 		DrawCube(cubeTopLeft, cubeSize);
 
@@ -116,10 +158,10 @@ int main()
 	return 0;
 }
 
-Point Convert3D2D(Triple position, Triple cameraPosition, Triple cameraPan)
+Vector2 Convert3D2D(Vector3 position, Vector3 cameraPosition, Vector3 cameraPan)
 {
-	Triple newPos;
-	Point p;
+	Vector3 newPos;
+	Vector2 p;
 
 	cameraPan.x *= 0.0174533;
 	cameraPan.y *= 0.0174533;
@@ -136,14 +178,14 @@ Point Convert3D2D(Triple position, Triple cameraPosition, Triple cameraPan)
 	}
 	else
 	{
-		p.x = cameraPosition.z / newPos.z * newPos.x - cameraPosition.x;
-		p.y = cameraPosition.z / newPos.z * newPos.y - cameraPosition.y;
+		p.x = int(cameraPosition.z / newPos.z * newPos.x - cameraPosition.x);
+		p.y = int(cameraPosition.z / newPos.z * newPos.y - cameraPosition.y);
 	}
 
 	return p;
 }
 
-void DrawLine(Point point1, Point point2)
+void DrawLine(Vector2 point1, Vector2 point2, COLORREF colour)
 {
 	double deltaX = point2.x - point1.x;
 	double deltaY = point2.y - point1.y;
@@ -155,18 +197,18 @@ void DrawLine(Point point1, Point point2)
 	{
 		for (int y = point1.y; y < point2.y; y++)
 		{
-			SetPixel(dcBack, point1.x, y, RGB(255, 0, 0));
+			SetPixel(dcBack, point1.x, y, colour);
 		}
 	}
 	else
 	{
 		for (int x = point1.x; x < point2.x; x++)
 		{
-			SetPixel(dcBack, x, y, RGB(255, 0, 0));
+			SetPixel(dcBack, x, y, colour);
 			error += deltaErr;
 			while (error >= 0.5)
 			{
-				SetPixel(dcBack, x, y, RGB(255, 0, 0));
+				SetPixel(dcBack, x, y, colour);
 				y += sign(point2.y - point1.y);
 				error -= 1.0;
 			}
@@ -184,82 +226,23 @@ int sign(double x)
 		return 1;
 }
 
-void DrawTri(Triple top, Triple left, Triple right)
+void DrawCube(Vector3 topLeft, Vector3 size)
 {
-	Point p1 = Convert3D2D(top, cameraPosition, cameraPan);
-	Point p2 = Convert3D2D(left, cameraPosition, cameraPan);
-	Point p3 = Convert3D2D(right, cameraPosition, cameraPan);
+	Vertex vertex[12];
 
-	if (p1.x < p2.x)
-		DrawLine(p1, p2);
-	else if (p2.x < p1.x)
-		DrawLine(p2, p1);
-	else
+	Vector3 topRight = Vector3(topLeft.x + size.x, topLeft.y, topLeft.z);
+	Vector3 bottomLeft = Vector3(topLeft.x, topLeft.y + size.y, topLeft.z);
+	Vector3 bottomRight = Vector3(topLeft.x + size.x, topLeft.y + size.y, topLeft.z);
+
+	Vector3 topLeft2 = Vector3(topLeft.x, topLeft.y, topLeft.z + size.z);
+	Vector3 topRight2 = Vector3(topLeft.x + size.x, topLeft.y, topLeft.z + size.z);
+	Vector3 bottomLeft2 = Vector3(topLeft.x, topLeft.y + size.y, topLeft.z + size.z);
+	Vector3 bottomRight2 = Vector3(topLeft.x + size.x, topLeft.y + size.y, topLeft.z + size.z);
+
+	vertex[0] = Vertex(topLeft, topRight);
+
+	for (int i = 0; i < 12; i++)
 	{
-		if (p1.y < p2.y)
-			DrawLine(p1, p2);
-		else
-			DrawLine(p2, p1);
+		//vertex[i].Draw(RGB(0, 255, 0));
 	}
-
-	if (p1.x < p3.x)
-		DrawLine(p1, p3);
-	else if (p3.x < p1.x)
-		DrawLine(p3, p1);
-	else
-	{
-		if (p1.y < p3.y)
-			DrawLine(p1, p3);
-		else
-			DrawLine(p3, p1);
-	}
-
-	if (p3.x < p2.x)
-		DrawLine(p3, p2);
-	else if (p2.x < p3.x)
-		DrawLine(p2, p3);
-	else
-	{
-		if (p3.y < p2.y)
-			DrawLine(p3, p2);
-		else
-			DrawLine(p2, p3);
-	}
-}
-
-void DrawQuad(Triple topLeft, Triple topRight, Triple bottomLeft, Triple bottomRight)
-{
-	DrawTri(topLeft, bottomLeft, bottomRight);
-	DrawTri(topLeft, topRight, bottomRight);
-}
-
-void DrawCube(Triple topLeft, Triple size)
-{
-	Triple topRight1 = Triple(topLeft.x + size.x, topLeft.y, topLeft.z);
-	Triple bottomLeft1 = Triple(topLeft.x, topLeft.y + size.y, topLeft.z);
-	Triple bottomRight1 = Triple(topLeft.x + size.x, topLeft.y + size.y, topLeft.z);
-
-	Triple topLeft2 = Triple(topLeft.x, topLeft.y, topLeft.z + size.z);
-	Triple topRight2 = Triple(topLeft.x + size.x, topLeft.y, topLeft.z + size.z);
-	Triple bottomLeft2 = Triple(topLeft.x, topLeft.y + size.y, topLeft.z + size.z);
-	Triple bottomRight2 = Triple(topLeft.x + size.x, topLeft.y + size.y, topLeft.z + size.z);
-
-	// Front
-	DrawQuad(topLeft, topRight1, bottomLeft1, bottomRight1);
-
-	// Back
-	DrawQuad(topLeft2, topRight2, bottomLeft2, bottomRight2);
-
-	// Left
-	DrawQuad(topLeft2, topLeft, bottomLeft2, bottomLeft1);
-
-	// Right
-	DrawQuad(topRight1, topRight2, bottomRight1, bottomRight2);
-
-	// Top
-	DrawQuad(topLeft2, topRight2, topLeft, topRight1);
-
-	// Bottom
-	DrawQuad(bottomLeft1, bottomRight1, bottomLeft2, bottomRight2);
-
 }
