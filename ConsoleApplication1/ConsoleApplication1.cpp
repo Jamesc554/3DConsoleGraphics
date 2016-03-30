@@ -70,17 +70,18 @@ struct Vertex
 	}
 };
 
-Vector2 Convert3D2D(Vector3 position, Vector3 cameraPosition, Vector3 cameraPan);
-void DrawVertex(Vertex vertex, COLORREF colour);
+Vector2 Convert3D2D(Vector3 position, Vector3 cameraPosition, Vector3 cameraPan, int angle);
+void DrawVertex(Vertex vertex, int angle, COLORREF colour);
 void DrawLine(Vector2 point1, Vector2 point2, COLORREF colour);
 int sign(double x);
-void DrawCube(Vector3 topLeft, Vector3 size);
+void DrawCube(Vector3 topLeft, Vector3 size, int angle);
 
 HBITMAP backBuffer;
 HDC dc;
 HDC dcBack;
 
 Vector3 cubeTopLeft = Vector3(100, 100, 1);
+Vector3 cubeTopLeft2 = Vector3(300, 100, 1);
 Vector3 cubeSize = Vector3(100, 100, 100);
 
 Vector3 cameraPan = Vector3(0, 0, 0);
@@ -96,6 +97,8 @@ int main()
 	MoveWindow(console, 0, 0, 1280, 720, TRUE);
 
 	int i = 0;
+	int angle1 = 0;
+	int angle2 = 0;
 
 	while (1 == 1)
 	{
@@ -111,17 +114,18 @@ int main()
 		i = _getch();
 
 		if (i == 72)
-			cameraPan.y -= 5;
+			angle1 += 5;
 		else if (i == 80)
-			cameraPan.x -= 5;
+			angle2 += 5;
 		else if (i == 75)
-			camPos.x += 5;
+			cameraPan.z -= 5;
 		else if (i == 77)
 			camPos.x -= 5;
 
 		cameraPosition = camPos;
 
-		DrawCube(cubeTopLeft, cubeSize);
+		DrawCube(cubeTopLeft, cubeSize, angle1);
+		DrawCube(cubeTopLeft2, cubeSize, angle2);
 
 		BitBlt(dc, 0, 0, r.right, r.bottom, dcBack, 0, 0, SRCCOPY);
 
@@ -135,14 +139,14 @@ int main()
 	return 0;
 }
 
-Vector2 Convert3D2D(Vector3 position, Vector3 cameraPosition, Vector3 cameraPan)
+Vector2 Convert3D2D(Vector3 position, Vector3 cameraPosition, Vector3 cameraPan, int angle)
 {
 	Vector3 newPos;
 	Vector2 p;
 
-	cameraPan.x *= 0.0174533;
-	cameraPan.y *= 0.0174533;
-	cameraPan.z *= 0.0174533;
+	cameraPan.x = (angle - cameraPan.x) * 0.0174533;
+	cameraPan.y = (angle - cameraPan.y) * 0.0174533;
+	cameraPan.z = (angle - cameraPan.z) * 0.0174533;
 
 	newPos.x = cos(cameraPan.y) * (sin(cameraPan.z) * position.y + cos(cameraPan.z) * position.x) - sin(cameraPan.y) * position.z;
 	newPos.y = sin(cameraPan.x) * (cos(cameraPan.y) * position.z + sin(cameraPan.y) * (sin(cameraPan.z) * position.y + cos(cameraPan.z) * position.x)) + cos(cameraPan.x) * (cos(cameraPan.z) * position.y - sin(cameraPan.z) * position.x);
@@ -162,10 +166,10 @@ Vector2 Convert3D2D(Vector3 position, Vector3 cameraPosition, Vector3 cameraPan)
 	return p;
 }
 
-void DrawVertex(Vertex vertex, COLORREF colour)
+void DrawVertex(Vertex vertex, int angle, COLORREF colour)
 {
-	Vector2 pointA = Convert3D2D(vertex.positionA, cameraPosition, cameraPan);
-	Vector2 pointB = Convert3D2D(vertex.positionB, cameraPosition, cameraPan);
+	Vector2 pointA = Convert3D2D(vertex.positionA, cameraPosition, cameraPan, angle);
+	Vector2 pointB = Convert3D2D(vertex.positionB, cameraPosition, cameraPan, angle);
 
 	if (pointA.x < pointB.x)
 		DrawLine(pointA, pointB, colour);
@@ -221,9 +225,9 @@ int sign(double x)
 		return 1;
 }
 
-void DrawCube(Vector3 topLeft, Vector3 size)
+void DrawCube(Vector3 topLeft, Vector3 size, int angle)
 {
-	Vertex vertex[12];
+	Vertex vertices[12];
 
 	Vector3 topRight = Vector3(topLeft.x + size.x, topLeft.y, topLeft.z);
 	Vector3 bottomLeft = Vector3(topLeft.x, topLeft.y + size.y, topLeft.z);
@@ -234,23 +238,23 @@ void DrawCube(Vector3 topLeft, Vector3 size)
 	Vector3 bottomLeft2 = Vector3(topLeft.x, topLeft.y + size.y, topLeft.z + size.z);
 	Vector3 bottomRight2 = Vector3(topLeft.x + size.x, topLeft.y + size.y, topLeft.z + size.z);
 
-	vertex[0] = Vertex(topLeft, topRight);
-	vertex[1] = Vertex(topLeft, bottomLeft);
-	vertex[2] = Vertex(topRight, bottomRight);
-	vertex[3] = Vertex(bottomLeft, bottomRight);
+	vertices[0] = Vertex(topLeft, topRight);
+	vertices[1] = Vertex(topLeft, bottomLeft);
+	vertices[2] = Vertex(topRight, bottomRight);
+	vertices[3] = Vertex(bottomLeft, bottomRight);
 
-	vertex[4] = Vertex(topLeft2, topRight2);
-	vertex[5] = Vertex(topLeft2, bottomLeft2);
-	vertex[6] = Vertex(topRight2, bottomRight2);
-	vertex[7] = Vertex(bottomLeft2, bottomRight2);
+	vertices[4] = Vertex(topLeft2, topRight2);
+	vertices[5] = Vertex(topLeft2, bottomLeft2);
+	vertices[6] = Vertex(topRight2, bottomRight2);
+	vertices[7] = Vertex(bottomLeft2, bottomRight2);
 
-	vertex[8] = Vertex(topLeft, topLeft2);
-	vertex[9] = Vertex(topRight, topRight2);
-	vertex[10] = Vertex(bottomLeft, bottomLeft2);
-	vertex[11] = Vertex(bottomRight, bottomRight2);
+	vertices[8] = Vertex(topLeft, topLeft2);
+	vertices[9] = Vertex(topRight, topRight2);
+	vertices[10] = Vertex(bottomLeft, bottomLeft2);
+	vertices[11] = Vertex(bottomRight, bottomRight2);
 
 	for (int i = 0; i < 12; i++)
 	{
-		DrawVertex(vertex[i], RGB((i * 20), 150, 0));
+		DrawVertex(vertices[i], angle, RGB((i * 20), 150, 0));
 	}
 }
